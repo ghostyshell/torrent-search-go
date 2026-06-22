@@ -1,0 +1,837 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#020617" />
+  <meta name="color-scheme" content="dark" />
+
+  <title>torrent-search-go - High-Performance Go Torrent Search Backend</title>
+  <meta name="description" content="Open-source Go backend for torrent search and streaming. Aggregates 7 indexers in parallel, resolves Real-Debrid streaming links, manages favorites in MongoDB, and ships as a single binary. GPL-3.0." />
+  <meta name="keywords" content="torrent search, go backend, golang, real-debrid, torrent api, piratebay, yts, 1337x, mongodb, open source" />
+  <meta name="author" content="akshatsinghkaushik" />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+
+  <link rel="canonical" href="https://akshatsinghkaushik.github.io/torrent-search-go/" />
+  <link rel="icon" href="/torrent-search-go/site/favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/torrent-search-go/site/favicon.svg" />
+  <link rel="manifest" href="/torrent-search-go/site/site.webmanifest" />
+  <link rel="sitemap" type="application/xml" href="/torrent-search-go/site/sitemap.xml" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="torrent-search-go" />
+  <meta property="og:title" content="torrent-search-go - High-Performance Go Torrent Search Backend" />
+  <meta property="og:description" content="Open-source Go backend for torrent search and streaming. 7 indexers in parallel, Real-Debrid link resolution, MongoDB persistence. Single binary, Docker-ready, GPL-3.0." />
+  <meta property="og:url" content="https://akshatsinghkaushik.github.io/torrent-search-go/" />
+  <meta property="og:image" content="https://akshatsinghkaushik.github.io/torrent-search-go/site/og-image.svg" />
+  <meta property="og:image:alt" content="torrent-search-go - dark performance-themed hero showing concurrent scraping architecture" />
+  <meta property="og:image:type" content="image/svg+xml" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:locale" content="en_US" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="torrent-search-go - High-Performance Go Torrent Search Backend" />
+  <meta name="twitter:description" content="Open-source Go backend - 7 indexers, Real-Debrid, MongoDB, single binary. GPL-3.0." />
+  <meta name="twitter:image" content="https://akshatsinghkaushik.github.io/torrent-search-go/site/og-image.svg" />
+  <meta name="twitter:image:alt" content="torrent-search-go hero" />
+
+  <!-- Performance hints -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="dns-prefetch" href="https://github.com" />
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" />
+
+  <!-- Tailwind Play CDN - config MUST be before the CDN script -->
+  <script>
+    window.tailwind = {
+      config: {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              base:    '#020617',
+              surface: '#0F172A',
+              muted:   '#1E293B',
+              border:  '#1E293B',
+              accent:  '#00ADD8',
+              glow:    '#22D3EE',
+              fg:      '#F8FAFC',
+              'fg-muted': '#94A3B8',
+            },
+            fontFamily: {
+              sans: ['Inter', 'system-ui', 'sans-serif'],
+              mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+            },
+            boxShadow: {
+              'cyan-sm':  '0 0 0 1px rgba(0,173,216,0.3), 0 0 12px rgba(0,173,216,0.15)',
+              'cyan-md':  '0 0 0 1px rgba(0,173,216,0.4), 0 0 32px rgba(0,173,216,0.2)',
+              'cyan-lg':  '0 0 0 1px rgba(0,173,216,0.5), 0 0 60px rgba(0,173,216,0.25)',
+            },
+            animation: {
+              'bar-fill': 'barFill 1.4s ease-out forwards',
+              'fade-up':  'fadeUp 0.6s ease-out both',
+              'pulse-slow': 'pulse 3s ease-in-out infinite',
+            },
+            keyframes: {
+              barFill: { '0%': { width: '0%' }, '100%': { width: 'var(--bar-width)' } },
+              fadeUp:  { '0%': { opacity: '0', transform: 'translateY(16px)' }, '100%': { opacity: '1', transform: 'none' } },
+            },
+          },
+        },
+      },
+    };
+  </script>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+
+  <!-- JSON-LD: SoftwareApplication -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "torrent-search-go",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "Linux, macOS, Windows",
+    "url": "https://akshatsinghkaushik.github.io/torrent-search-go/",
+    "downloadUrl": "https://github.com/akshatsinghkaushik/torrent-search-go",
+    "license": "https://www.gnu.org/licenses/gpl-3.0.html",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "author": { "@type": "Person", "name": "akshatsinghkaushik", "url": "https://github.com/akshatsinghkaushik" },
+    "description": "Open-source Go backend for torrent search and streaming. Aggregates 7 indexers in parallel goroutines, resolves Real-Debrid premium streaming links, manages favorites in MongoDB, and ships as a single binary.",
+    "image": "https://akshatsinghkaushik.github.io/torrent-search-go/site/og-image.svg",
+    "programmingLanguage": "Go",
+    "featureList": [
+      "7-source parallel torrent search via goroutines",
+      "Real-Debrid streaming link resolution",
+      "AES-256-GCM encrypted key storage",
+      "Google OAuth authentication",
+      "MongoDB persistence",
+      "Background jobs with scheduler",
+      "Browser-based monitoring dashboard",
+      "Single binary deployment",
+      "Docker and container-platform ready"
+    ]
+  }
+  </script>
+
+  <!-- JSON-LD: FAQPage -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What does torrent-search-go do?",
+        "acceptedAnswer": { "@type": "Answer", "text": "It is an HTTP API backend written in Go that searches multiple torrent indexers simultaneously, caches results, integrates with Real-Debrid for premium streaming, and provides user accounts with favorites." }
+      },
+      {
+        "@type": "Question",
+        "name": "Which torrent indexers are supported?",
+        "acceptedAnswer": { "@type": "Answer", "text": "PirateBay/HiddenBay, 1337x (via FlareSolverr), YTS, NyaaSI, LimeTorrents, and TorrentProject - seven total, searched in parallel." }
+      },
+      {
+        "@type": "Question",
+        "name": "What database does it use?",
+        "acceptedAnswer": { "@type": "Answer", "text": "MongoDB. The backend stores sessions, users, favorites, stream URL cache, and cover images in MongoDB collections with appropriate indexes created on startup." }
+      },
+      {
+        "@type": "Question",
+        "name": "How do I run it?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Run 'go build -o server . && ./server' after configuring a .env file, or use the provided Dockerfile and docker-compose.yml for containerized deployment." }
+      },
+      {
+        "@type": "Question",
+        "name": "Is it production-ready?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. It includes graceful shutdown, connection pooling, panic recovery middleware, structured logging, a health-check endpoint, and a monitoring dashboard. Rate limiting and additional security headers are planned improvements." }
+      },
+      {
+        "@type": "Question",
+        "name": "What license is it under?",
+        "acceptedAnswer": { "@type": "Answer", "text": "GNU General Public License v3.0 (GPL-3.0). Source code is at github.com/akshatsinghkaushik/torrent-search-go." }
+      }
+    ]
+  }
+  </script>
+
+  <!-- JSON-LD: WebSite -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "torrent-search-go",
+    "url": "https://akshatsinghkaushik.github.io/torrent-search-go/",
+    "publisher": { "@type": "Person", "name": "akshatsinghkaushik", "url": "https://github.com/akshatsinghkaushik" }
+  }
+  </script>
+
+  <style>
+    /* Skip link */
+    .skip-link {
+      position: absolute;
+      top: -999px; left: 0;
+      padding: 0.5rem 1rem;
+      background: #00ADD8;
+      color: #020617;
+      font-weight: 700;
+      z-index: 9999;
+      border-radius: 0 0 4px 0;
+    }
+    .skip-link:focus { top: 0; }
+
+    /* Screen-reader only */
+    .sr-only {
+      position: absolute; width: 1px; height: 1px;
+      padding: 0; margin: -1px; overflow: hidden;
+      clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    }
+
+    /* Dark grid background */
+    .grid-bg {
+      background-image:
+        linear-gradient(to bottom, rgba(2,6,23,0) 0%, rgba(2,6,23,0.9) 70%, #020617 100%),
+        linear-gradient(rgba(0,173,216,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,173,216,0.04) 1px, transparent 1px);
+      background-size: 100% 100%, 64px 64px, 64px 64px;
+    }
+
+    /* Cyan text glow */
+    .cyan-glow {
+      color: #00ADD8;
+      text-shadow: 0 0 8px rgba(0,173,216,0.5), 0 0 28px rgba(0,173,216,0.2);
+    }
+
+    /* Animated gradient sweep on hero headline */
+    .sweep {
+      background: linear-gradient(90deg, #00ADD8 0%, #22D3EE 40%, #F8FAFC 70%, #00ADD8 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: sweep 4s linear infinite;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .sweep { animation: none; background: none; -webkit-text-fill-color: #F8FAFC; color: #F8FAFC; }
+    }
+    @keyframes sweep {
+      to { background-position: 200% center; }
+    }
+
+    /* Bar animation */
+    .perf-bar {
+      height: 8px;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #00ADD8, #22D3EE);
+      width: 0%;
+      transition: width 1.2s ease-out;
+      box-shadow: 0 0 8px rgba(0,173,216,0.4);
+    }
+    .perf-bar.animated { width: var(--bar-w, 0%); }
+
+    /* Focus ring */
+    *:focus-visible {
+      outline: 2px solid #00ADD8;
+      outline-offset: 3px;
+    }
+
+    /* Code block */
+    pre {
+      background: #0F172A;
+      border: 1px solid #1E293B;
+      border-radius: 8px;
+      overflow-x: auto;
+      padding: 1.25rem;
+    }
+    code { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.875rem; color: #22D3EE; }
+
+    /* Details/FAQ */
+    details summary::-webkit-details-marker { display: none; }
+    details summary { list-style: none; }
+    details[open] .chevron { transform: rotate(180deg); }
+    .chevron { transition: transform 0.2s ease; display: inline-block; }
+
+    /* Discord & Ko-fi buttons */
+    .discord-btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; background: rgba(30,41,59,0.4); border: 1px solid #1E293B; border-radius: 10px; color: #F8FAFC; font-size: 13px; font-weight: 600; text-decoration: none; transition: all 0.15s; }
+    .discord-btn:hover { background: rgba(30,41,59,0.7); border-color: #5865F2; }
+    .discord-btn svg { width: 18px; height: 18px; fill: #5865F2; }
+    .kofi-btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; background: rgba(30,41,59,0.4); border: 1px solid #1E293B; border-radius: 10px; color: #F8FAFC; font-size: 13px; font-weight: 600; text-decoration: none; transition: all 0.15s; }
+    .kofi-btn:hover { background: rgba(30,41,59,0.7); border-color: #FF5E5B; }
+    .kofi-btn svg { width: 18px; height: 18px; fill: #FF5E5B; }
+  </style>
+</head>
+<body class="bg-base text-fg font-sans antialiased">
+
+  <!-- Skip Link -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <!-- Navigation -->
+  <header role="banner">
+    <nav class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between" aria-label="Site navigation">
+      <a href="/torrent-search-go/" class="flex items-center gap-2 group" aria-label="torrent-search-go home">
+        <!-- Inline SVG logo -->
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none" aria-hidden="true" focusable="false">
+          <rect width="32" height="32" rx="6" fill="#020617" stroke="#1E293B" stroke-width="1"/>
+          <circle cx="16" cy="16" r="9" stroke="#00ADD8" stroke-width="1.5" fill="none"/>
+          <path d="M16 11 L16 16 L20 16" stroke="#00ADD8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="16" cy="16" r="1.5" fill="#00ADD8"/>
+        </svg>
+        <span class="font-mono font-semibold text-fg text-sm tracking-tight">torrent-search-go</span>
+      </a>
+      <div class="flex items-center gap-4">
+        <a href="https://github.com/akshatsinghkaushik/torrent-search-go" class="text-fg-muted hover:text-accent transition-colors text-sm" aria-label="View source on GitHub">
+          <!-- GitHub icon -->
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+            <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+          </svg>
+        </a>
+        <a href="https://github.com/akshatsinghkaushik/torrent-search-go" class="bg-accent hover:bg-glow text-base font-semibold text-sm px-4 py-1.5 rounded-md transition-colors shadow-cyan-sm" aria-label="View on GitHub">
+          GitHub
+        </a>
+      </div>
+    </nav>
+  </header>
+
+  <main id="main-content">
+
+    <!-- Hero -->
+    <section class="grid-bg relative overflow-hidden pt-20 pb-28 sm:pt-28 sm:pb-36" aria-labelledby="hero-heading">
+      <!-- Background glow orbs -->
+      <div class="absolute inset-0 pointer-events-none" aria-hidden="true">
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-accent/5 blur-3xl"></div>
+        <div class="absolute top-1/3 left-1/3 w-[300px] h-[300px] rounded-full bg-glow/5 blur-2xl"></div>
+      </div>
+
+      <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <!-- Badge -->
+        <div class="inline-flex items-center gap-2 bg-surface border border-border rounded-full px-4 py-1.5 mb-8 text-xs font-mono text-accent shadow-cyan-sm" role="text">
+          <span aria-hidden="true" class="w-1.5 h-1.5 rounded-full bg-accent animate-pulse-slow"></span>
+          GPL-3.0 · Open Source · Go 1.25
+        </div>
+
+        <h1 id="hero-heading" class="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight leading-none mb-6">
+          <span class="sweep">torrent-search-go</span>
+        </h1>
+
+        <p class="text-lg sm:text-xl text-fg-muted max-w-2xl mx-auto mb-10 leading-relaxed">
+          A high-performance Go backend for torrent search and streaming.
+          Searches 7 indexers in parallel, resolves Real-Debrid links, and ships as a single binary.
+        </p>
+
+        <!-- Hero stat -->
+        <div class="inline-block bg-surface border border-border rounded-2xl px-8 py-6 mb-10 shadow-cyan-md" aria-label="Performance highlight">
+          <div class="font-mono text-5xl font-bold cyan-glow mb-1">7</div>
+          <div class="text-fg-muted text-sm">indexers searched concurrently</div>
+          <div class="mt-3 text-xs font-mono text-accent">parallel goroutines · shared connection pool</div>
+        </div>
+
+        <!-- CTA buttons -->
+        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+          <a href="https://github.com/akshatsinghkaushik/torrent-search-go"
+             class="bg-accent hover:bg-glow text-base font-semibold px-6 py-3 rounded-lg transition-all shadow-cyan-md hover:shadow-cyan-lg focus-visible:ring-2 focus-visible:ring-glow"
+             aria-label="Get started - view the repository on GitHub">
+            Get Started
+          </a>
+          <a href="#quickstart"
+             class="bg-surface border border-border hover:border-accent text-fg font-semibold px-6 py-3 rounded-lg transition-colors"
+             aria-label="Jump to quickstart guide">
+            Quickstart
+          </a>
+        </div>
+
+        <!-- Support links -->
+        <div class="flex flex-wrap gap-3 justify-center mt-6">
+          <a href="https://discord.gg/EbHcTNAqca" target="_blank" rel="noopener noreferrer" class="discord-btn">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.891.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+            Join Discord
+          </a>
+          <a href="https://ko-fi.com/ghosty99" target="_blank" rel="noopener noreferrer" class="kofi-btn">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23.258 8.363c-.003-.023-.005-.045-.008-.068-.01-.05-.02-.1-.035-.148-.012-.045-.03-.087-.048-.13-.017-.04-.037-.078-.058-.115-.023-.04-.05-.075-.077-.112-.027-.035-.055-.07-.086-.102-.03-.032-.063-.06-.096-.09-.035-.03-.07-.057-.108-.083-.037-.025-.077-.047-.117-.068-.04-.02-.082-.04-.125-.056-.045-.017-.09-.03-.137-.042-.047-.012-.095-.022-.144-.03-.024-.004-.047-.007-.07-.01-.03-.003-.06-.005-.09-.006-.03-.002-.06-.003-.09-.003-.03 0-.06.002-.09.003-.03.002-.06.004-.09.007-.023.002-.046.005-.07.009-.048.008-.096.018-.143.03-.047.012-.093.025-.138.042-.043.016-.084.035-.124.056-.04.02-.08.042-.118.067-.037.025-.073.053-.108.083-.034.028-.066.058-.096.09-.03.032-.058.066-.085.102-.028.036-.054.072-.077.112-.022.037-.042.075-.058.115-.02.043-.036.085-.05.13-.014.048-.024.098-.034.148-.003.023-.005.045-.008.068-.003.023-.005.046-.006.07-.002.03-.003.06-.003.09 0 .03.002.06.003.09.002.03.004.06.007.09.002.023.005.046.009.07.008.048.018.096.03.143.012.047.025.093.042.138.016.043.035.084.056.124.02.04.042.08.067.118.025.037.053.073.083.108.028.034.058.066.09.096.032.03.066.058.102.085.036.028.072.054.112.077.037.022.075.042.115.058.043.02.085.036.13.05.048.014.098.024.148.034.023.003.045.005.068.008.023.003.046.005.07.006.03.002.06.003.09.003.03 0 .06-.002.09-.003.03-.002.06-.004.09-.007.023-.002.046-.005.07-.009.048-.008.096-.018.143-.03.047-.012.093-.025.138-.042.043-.016.084-.035.124-.056.04-.02.08-.042.118-.067.037-.025.073-.053.108-.083.034-.028.066-.058.096-.09.03-.032.058-.066.085-.102.028-.036.054-.072.077-.112.022-.037.042-.075.058-.115.02-.043.036-.085.05-.13.014-.048.024-.098.034-.148.003-.023.005-.045.008-.068.003-.023.005-.046.006-.07.002-.03.003-.06.003-.09 0-.03-.002-.06-.003-.09-.002-.03-.004-.06-.007-.09-.002-.023-.005-.046-.009-.07zM11.67 16.5c-3.73 0-6.75-3.02-6.75-6.75 0-3.73 3.02-6.75 6.75-6.75s6.75 3.02 6.75 6.75c0 3.73-3.02 6.75-6.75 6.75zm0-12c-2.9 0-5.25 2.35-5.25 5.25s2.35 5.25 5.25 5.25 5.25-2.35 5.25-5.25-2.35-5.25-5.25-5.25z"/></svg>
+            Support on Ko-fi
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section class="py-20 sm:py-28" aria-labelledby="features-heading">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 id="features-heading" class="text-3xl sm:text-4xl font-bold text-center mb-4">What it does</h2>
+        <p class="text-center text-fg-muted mb-14 max-w-xl mx-auto">Everything you need for a production torrent search service - without the boilerplate.</p>
+
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+          <!-- Feature card template -->
+          <article class="bg-surface border border-border rounded-xl p-6 hover:border-accent/50 transition-colors" aria-label="Multi-source search feature">
+            <div class="w-10 h-10 rounded-lg bg-muted flex items-center justify-center mb-4" aria-hidden="true">
+              <!-- Search icon -->
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00ADD8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            </div>
+            <h3 class="font-semibold text-fg mb-2">Multi-Source Search</h3>
+            <p class="text-fg-muted text-sm leading-relaxed">7 indexers searched in parallel goroutines - PirateBay, 1337x, YTS, NyaaSI, LimeTorrents, TorrentProject, HiddenBay. Results merged in a single response.</p>
+          </article>
+
+          <article class="bg-surface border border-border rounded-xl p-6 hover:border-accent/50 transition-colors" aria-label="Real-Debrid integration feature">
+            <div class="w-10 h-10 rounded-lg bg-muted flex items-center justify-center mb-4" aria-hidden="true">
+              <!-- Bolt icon -->
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00ADD8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            </div>
+            <h3 class="font-semibold text-fg mb-2">Real-Debrid Integration</h3>
+            <p class="text-fg-muted text-sm leading-relaxed">Full round-trip: add magnet → poll status → select files → unrestrict link. Encrypted key storage (AES-256-GCM). Background refresh keeps links fresh.</p>
+          </article>
+
+          <article class="bg-surface border border-border rounded-xl p-6 hover:border-accent/50 transition-colors" aria-label="MongoDB persistence feature">
+            <div class="w-10 h-10 rounded-lg bg-muted flex items-center justify-center mb-4" aria-hidden="true">
+              <!-- Database icon -->
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00ADD8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3"/></svg>
+            </div>
+            <h3 class="font-semibold text-fg mb-2">MongoDB Persistence</h3>
+            <p class="text-fg-muted text-sm leading-relaxed">Sessions, users, favorites, stream URL cache, cover images, and generic KV store - all in MongoDB. Indexes created automatically on startup.</p>
+          </article>
+
+          <article class="bg-surface border border-border rounded-xl p-6 hover:border-accent/50 transition-colors" aria-label="Background jobs feature">
+            <div class="w-10 h-10 rounded-lg bg-muted flex items-center justify-center mb-4" aria-hidden="true">
+              <!-- Clock icon -->
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00ADD8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            </div>
+            <h3 class="font-semibold text-fg mb-2">Background Jobs</h3>
+            <p class="text-fg-muted text-sm leading-relaxed">Ticker-based scheduler for stream URL refresh (24 h), image cache pre-warming (6 h), storage cleanup (1 h), and log rotation (24 h). All observable from the dashboard.</p>
+          </article>
+
+          <article class="bg-surface border border-border rounded-xl p-6 hover:border-accent/50 transition-colors" aria-label="Single binary deployment feature">
+            <div class="w-10 h-10 rounded-lg bg-muted flex items-center justify-center mb-4" aria-hidden="true">
+              <!-- Package/box icon -->
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00ADD8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+            </div>
+            <h3 class="font-semibold text-fg mb-2">Single Binary</h3>
+            <p class="text-fg-muted text-sm leading-relaxed"><code>go build -o server .</code> produces one self-contained binary. No runtime, no package manager, no interpreter. Cold start under 100 ms.</p>
+          </article>
+
+          <article class="bg-surface border border-border rounded-xl p-6 hover:border-accent/50 transition-colors" aria-label="Monitoring dashboard feature">
+            <div class="w-10 h-10 rounded-lg bg-muted flex items-center justify-center mb-4" aria-hidden="true">
+              <!-- Activity icon -->
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00ADD8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </div>
+            <h3 class="font-semibold text-fg mb-2">Monitoring Dashboard</h3>
+            <p class="text-fg-muted text-sm leading-relaxed">Browser-based dashboard at <code>/</code> with job status, API usage charts, database health, log viewer, and manual job triggers. Password + IP protected.</p>
+          </article>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Architecture Summary -->
+    <section class="py-20 sm:py-24 bg-surface border-y border-border" aria-labelledby="arch-heading">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 id="arch-heading" class="text-3xl sm:text-4xl font-bold text-center mb-4">Architecture</h2>
+        <p class="text-center text-fg-muted mb-14 max-w-xl mx-auto">Clean layers, no framework magic, no global state.</p>
+
+        <div class="grid lg:grid-cols-2 gap-12 items-start">
+          <!-- Diagram -->
+          <div>
+            <pre class="text-xs leading-relaxed overflow-x-auto" aria-label="Architecture ASCII diagram" role="img"><code>HTTP Request
+    │
+    ▼
+Global Middleware Chain
+  Recovery → CORS → Logger → API Tracker
+    │
+    ▼
+Route Dispatch (Go 1.22 ServeMux)
+  METHOD /path/{param}
+    │
+    ▼
+Per-Route Middleware
+  RequireAuth / OptionalAuth / IPAllowlist
+    │
+    ▼
+Handler
+  auth · torrents · cache · images
+  favorites · proxy · monitoring
+    │
+    ▼
+Service Layer
+  scraper.Service → 7 goroutines (fan-out)
+  realdebrid.Client
+  jobs.Runner
+    │
+    ▼
+Storage (pkg/storage.Database)
+  └── pkg/mongo (MongoDB)
+</code></pre>
+          </div>
+
+          <!-- Key decisions -->
+          <div class="space-y-6">
+            <div>
+              <h3 class="font-semibold text-fg mb-1 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-accent" aria-hidden="true"></span>
+                Fan-out Search
+              </h3>
+              <p class="text-fg-muted text-sm">Every search spawns one goroutine per indexer. Results land on a buffered channel. No slow indexer blocks the response - all within the request context's deadline.</p>
+            </div>
+            <div>
+              <h3 class="font-semibold text-fg mb-1 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-accent" aria-hidden="true"></span>
+                Storage Interface
+              </h3>
+              <p class="text-fg-muted text-sm">All handlers receive a <code>pkg/storage.Database</code> interface, not a concrete driver. The MongoDB client is the active implementation; the interface makes the driver swappable.</p>
+            </div>
+            <div>
+              <h3 class="font-semibold text-fg mb-1 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-accent" aria-hidden="true"></span>
+                Graceful Shutdown
+              </h3>
+              <p class="text-fg-muted text-sm">SIGINT/SIGTERM triggers a 30-second drain: job scheduler stops first, then <code>server.Shutdown(ctx)</code> drains in-flight HTTP connections.</p>
+            </div>
+            <div>
+              <h3 class="font-semibold text-fg mb-1 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-accent" aria-hidden="true"></span>
+                No Framework
+              </h3>
+              <p class="text-fg-muted text-sm">The router is a thin wrapper around Go 1.22's standard <code>net/http</code> ServeMux with Express-style <code>:param</code> translation. Zero external router dependency.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Performance -->
+    <section class="py-20 sm:py-28" aria-labelledby="perf-heading">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 id="perf-heading" class="text-3xl sm:text-4xl font-bold text-center mb-4">Performance Profile</h2>
+        <p class="text-center text-fg-muted mb-14 max-w-xl mx-auto">Qualitative characteristics of the Go runtime compared to interpreted alternatives.</p>
+
+        <div class="space-y-6" id="perf-bars">
+          <!-- Bar rows -->
+          <div>
+            <div class="flex justify-between text-sm mb-2">
+              <span class="text-fg">Concurrent indexer search</span>
+              <span class="font-mono text-accent text-xs">goroutine fan-out</span>
+            </div>
+            <div class="bg-muted rounded-full h-2 overflow-hidden">
+              <div class="perf-bar" style="--bar-w: 95%"></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-sm mb-2">
+              <span class="text-fg">Binary cold start</span>
+              <span class="font-mono text-accent text-xs">&lt; 100 ms</span>
+            </div>
+            <div class="bg-muted rounded-full h-2 overflow-hidden">
+              <div class="perf-bar" style="--bar-w: 97%"></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-sm mb-2">
+              <span class="text-fg">Idle memory footprint</span>
+              <span class="font-mono text-accent text-xs">&lt; 50 MB RSS</span>
+            </div>
+            <div class="bg-muted rounded-full h-2 overflow-hidden">
+              <div class="perf-bar" style="--bar-w: 90%"></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-sm mb-2">
+              <span class="text-fg">Cache hit (MongoDB KV lookup)</span>
+              <span class="font-mono text-accent text-xs">single-digit ms</span>
+            </div>
+            <div class="bg-muted rounded-full h-2 overflow-hidden">
+              <div class="perf-bar" style="--bar-w: 88%"></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-sm mb-2">
+              <span class="text-fg">Connection pool efficiency</span>
+              <span class="font-mono text-accent text-xs">100 idle / 10 per-host</span>
+            </div>
+            <div class="bg-muted rounded-full h-2 overflow-hidden">
+              <div class="perf-bar" style="--bar-w: 85%"></div>
+            </div>
+          </div>
+        </div>
+
+        <p class="text-center text-xs text-fg-muted mt-8">
+          Bars are qualitative architectural indicators, not benchmark measurements. Actual performance depends on network latency to indexers and MongoDB.
+        </p>
+      </div>
+    </section>
+
+    <!-- Quickstart -->
+    <section class="py-20 sm:py-28 bg-surface border-y border-border" id="quickstart" aria-labelledby="qs-heading">
+      <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 id="qs-heading" class="text-3xl sm:text-4xl font-bold text-center mb-4">Quickstart</h2>
+        <p class="text-center text-fg-muted mb-12">Up and running in three steps.</p>
+
+        <div class="space-y-8">
+          <!-- Step 1 -->
+          <div class="flex gap-4">
+            <div class="shrink-0 w-8 h-8 rounded-full bg-accent/10 border border-accent/30 flex items-center justify-center text-accent font-mono text-sm font-bold" aria-hidden="true">1</div>
+            <div class="flex-1">
+              <h3 class="font-semibold text-fg mb-3">Clone and build</h3>
+              <pre><code>git clone https://github.com/akshatsinghkaushik/torrent-search-go.git
+cd torrent-search-go
+go mod download
+go build -o server .</code></pre>
+            </div>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="flex gap-4">
+            <div class="shrink-0 w-8 h-8 rounded-full bg-accent/10 border border-accent/30 flex items-center justify-center text-accent font-mono text-sm font-bold" aria-hidden="true">2</div>
+            <div class="flex-1">
+              <h3 class="font-semibold text-fg mb-3">Configure environment</h3>
+              <pre><code>cp .env.example .env
+# Edit .env - minimum required:
+# MONGODB_URI=mongodb://localhost:27017
+# SESSION_SECRET=&lt;64-char random hex&gt;
+# GOOGLE_SERVICE_ACCOUNT_JSON={...}
+# GOOGLE_CUSTOM_SEARCH_ENGINE_ID=your-cse-id</code></pre>
+            </div>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="flex gap-4">
+            <div class="shrink-0 w-8 h-8 rounded-full bg-accent/10 border border-accent/30 flex items-center justify-center text-accent font-mono text-sm font-bold" aria-hidden="true">3</div>
+            <div class="flex-1">
+              <h3 class="font-semibold text-fg mb-3">Run</h3>
+              <pre><code>./server
+# Server starts at http://localhost:3001
+# Dashboard at http://localhost:3001/
+# Health at http://localhost:3001/health</code></pre>
+            </div>
+          </div>
+
+          <!-- Docker alternative -->
+          <div class="bg-base border border-border rounded-xl p-6 mt-4">
+            <h3 class="font-semibold text-fg mb-3 flex items-center gap-2">
+              <!-- Docker icon -->
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="#00ADD8" aria-hidden="true"><path d="M13.983 11.078h2.119a.186.186 0 0 0 .186-.185V9.006a.186.186 0 0 0-.186-.186h-2.119a.185.185 0 0 0-.185.185v1.888c0 .102.083.185.185.185m-2.954-5.43h2.118a.186.186 0 0 0 .186-.186V3.574a.186.186 0 0 0-.186-.185h-2.118a.185.185 0 0 0-.185.185v1.888c0 .102.082.185.185.185m0 2.716h2.118a.187.187 0 0 0 .186-.186V6.29a.186.186 0 0 0-.186-.185h-2.118a.185.185 0 0 0-.185.185v1.887c0 .102.082.185.185.186m-2.93 0h2.12a.186.186 0 0 0 .184-.186V6.29a.185.185 0 0 0-.185-.185H8.1a.185.185 0 0 0-.185.185v1.887c0 .102.083.185.185.186m-2.964 0h2.119a.186.186 0 0 0 .185-.186V6.29a.185.185 0 0 0-.185-.185H5.136a.186.186 0 0 0-.186.185v1.887c0 .102.084.185.186.186m5.893 2.715h2.118a.186.186 0 0 0 .186-.185V9.006a.186.186 0 0 0-.186-.186h-2.118a.185.185 0 0 0-.185.185v1.888c0 .102.082.185.185.185m-2.93 0h2.12a.185.185 0 0 0 .184-.185V9.006a.185.185 0 0 0-.184-.186h-2.12a.185.185 0 0 0-.184.185v1.888c0 .102.083.185.185.185m-2.964 0h2.119a.185.185 0 0 0 .185-.185V9.006a.185.185 0 0 0-.184-.186h-2.12a.186.186 0 0 0-.186.186v1.887c0 .102.084.185.186.185m-2.92 0h2.12a.186.186 0 0 0 .184-.185V9.006a.185.185 0 0 0-.184-.186h-2.12a.185.185 0 0 0-.185.186v1.887c0 .102.083.185.185.185M23.763 9.89c-.065-.051-.672-.51-1.954-.51-.338.001-.676.03-1.01.087-.248-1.7-1.653-2.53-1.716-2.566l-.344-.199-.226.327c-.284.438-.49.922-.612 1.43-.23.97-.09 1.882.403 2.661-.595.332-1.55.413-1.744.42H.751a.751.751 0 0 0-.75.748 11.376 11.376 0 0 0 .692 4.062c.545 1.428 1.355 2.48 2.41 3.124 1.18.723 3.1 1.137 5.275 1.137.983.003 1.963-.086 2.93-.266a12.248 12.248 0 0 0 3.823-1.389c.98-.567 1.86-1.288 2.61-2.136 1.252-1.418 1.998-2.997 2.553-4.4h.221c1.372 0 2.215-.549 2.68-1.009.309-.293.55-.65.707-1.046l.098-.288Z"/></svg>
+              Docker alternative
+            </h3>
+            <pre><code>docker build -f deployments/Dockerfile -t torrent-search-go .
+docker run -p 3001:3001 --env-file .env torrent-search-go
+
+# Or with FlareSolverr (for 1337x):
+docker compose -f deployments/docker-compose.yml up</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Configuration highlights -->
+    <section class="py-20 sm:py-28" aria-labelledby="config-heading">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 id="config-heading" class="text-3xl sm:text-4xl font-bold text-center mb-4">Configuration</h2>
+        <p class="text-center text-fg-muted mb-14 max-w-xl mx-auto">Pure environment variables - no config files, no reinvention. Sensible defaults for everything optional.</p>
+
+        <div class="grid sm:grid-cols-2 gap-4">
+          <!-- Config item -->
+          <div class="bg-surface border border-border rounded-lg p-4">
+            <div class="font-mono text-accent text-xs mb-1">MONGODB_URI</div>
+            <div class="text-fg text-sm">MongoDB connection string. Supports <code>mongodb://</code> and <code>mongodb+srv://</code>. Credentials can be injected separately via <code>MONGO_USERNAME</code> / <code>MONGO_PASSWORD</code>.</div>
+          </div>
+          <div class="bg-surface border border-border rounded-lg p-4">
+            <div class="font-mono text-accent text-xs mb-1">SESSION_SECRET</div>
+            <div class="text-fg text-sm">Signs session tokens. Also used as fallback AES-256-GCM key for Real-Debrid key encryption if <code>REAL_DEBRID_ENCRYPTION_KEY</code> is not set.</div>
+          </div>
+          <div class="bg-surface border border-border rounded-lg p-4">
+            <div class="font-mono text-accent text-xs mb-1">GOOGLE_SERVICE_ACCOUNT_JSON</div>
+            <div class="text-fg text-sm">Full service-account JSON with OAuth credentials embedded. The server extracts <code>oauth_client_id</code> and <code>oauth_client_secret</code> automatically.</div>
+          </div>
+          <div class="bg-surface border border-border rounded-lg p-4">
+            <div class="font-mono text-accent text-xs mb-1">FLARE_SOLVERR_URL</div>
+            <div class="text-fg text-sm">Optional FlareSolverr proxy for the 1337x scraper. Without it, 1337x is skipped gracefully. Example: <code>http://flaresolverr:8191</code>.</div>
+          </div>
+          <div class="bg-surface border border-border rounded-lg p-4">
+            <div class="font-mono text-accent text-xs mb-1">MONITORING_IP_ALLOWLIST</div>
+            <div class="text-fg text-sm">Comma-separated IPs/CIDRs allowed to access <code>/api/monitoring/*</code>. Combine with <code>DASHBOARD_PASSWORD</code> for two-factor protection.</div>
+          </div>
+          <div class="bg-surface border border-border rounded-lg p-4">
+            <div class="font-mono text-accent text-xs mb-1">ALLOWED_EMAILS</div>
+            <div class="text-fg text-sm">Comma-separated Google account emails permitted to authenticate. Leave empty to allow any Google account.</div>
+          </div>
+        </div>
+
+        <div class="text-center mt-10">
+          <a href="https://github.com/akshatsinghkaushik/torrent-search-go/blob/main/docs/configuration.md"
+             class="text-accent hover:text-glow font-medium text-sm transition-colors inline-flex items-center gap-1">
+            View full configuration reference
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="py-20 sm:py-28 bg-surface border-y border-border" aria-labelledby="faq-heading">
+      <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 id="faq-heading" class="text-3xl sm:text-4xl font-bold text-center mb-14">Frequently Asked Questions</h2>
+
+        <div class="space-y-3" role="list">
+
+          <details class="bg-base border border-border rounded-xl overflow-hidden group" role="listitem">
+            <summary class="flex items-center justify-between px-6 py-4 cursor-pointer text-fg font-medium hover:text-accent transition-colors list-none" aria-expanded="false">
+              What does torrent-search-go do?
+              <span class="chevron text-fg-muted" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+              </span>
+            </summary>
+            <div class="px-6 pb-5 text-fg-muted text-sm leading-relaxed">
+              It is an HTTP API backend written in Go that searches multiple torrent indexers simultaneously, caches results, integrates with Real-Debrid for premium streaming links, and provides Google OAuth user accounts with favorites, cover images, and background maintenance jobs.
+            </div>
+          </details>
+
+          <details class="bg-base border border-border rounded-xl overflow-hidden group" role="listitem">
+            <summary class="flex items-center justify-between px-6 py-4 cursor-pointer text-fg font-medium hover:text-accent transition-colors list-none" aria-expanded="false">
+              Which torrent indexers are supported?
+              <span class="chevron text-fg-muted" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+              </span>
+            </summary>
+            <div class="px-6 pb-5 text-fg-muted text-sm leading-relaxed">
+              Seven scrapers are registered: PirateBay/HiddenBay, 1337x (requires FlareSolverr for Cloudflare bypass), YTS, NyaaSI, LimeTorrents, and TorrentProject. All are searched concurrently via goroutine fan-out.
+            </div>
+          </details>
+
+          <details class="bg-base border border-border rounded-xl overflow-hidden group" role="listitem">
+            <summary class="flex items-center justify-between px-6 py-4 cursor-pointer text-fg font-medium hover:text-accent transition-colors list-none" aria-expanded="false">
+              What database does it use?
+              <span class="chevron text-fg-muted" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+              </span>
+            </summary>
+            <div class="px-6 pb-5 text-fg-muted text-sm leading-relaxed">
+              MongoDB. Indexes are created automatically on startup. Any MongoDB deployment works - local, Atlas free tier, or self-hosted. The storage layer is abstracted behind an interface making the driver swappable.
+            </div>
+          </details>
+
+          <details class="bg-base border border-border rounded-xl overflow-hidden group" role="listitem">
+            <summary class="flex items-center justify-between px-6 py-4 cursor-pointer text-fg font-medium hover:text-accent transition-colors list-none" aria-expanded="false">
+              Is Real-Debrid required?
+              <span class="chevron text-fg-muted" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+              </span>
+            </summary>
+            <div class="px-6 pb-5 text-fg-muted text-sm leading-relaxed">
+              No. Torrent search, browsing, and details work without Real-Debrid. Stream URL resolution and the proxy endpoint require a user-provided Real-Debrid API key stored encrypted per-user in MongoDB.
+            </div>
+          </details>
+
+          <details class="bg-base border border-border rounded-xl overflow-hidden group" role="listitem">
+            <summary class="flex items-center justify-between px-6 py-4 cursor-pointer text-fg font-medium hover:text-accent transition-colors list-none" aria-expanded="false">
+              Can I deploy it on Railway, Fly, Render, or Cloud Run?
+              <span class="chevron text-fg-muted" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+              </span>
+            </summary>
+            <div class="px-6 pb-5 text-fg-muted text-sm leading-relaxed">
+              Yes. The binary listens on <code>$PORT</code> (injected by most platforms) and defaults to 8080 in Docker. A health check at <code>GET /health</code> is ready for platform probes. <code>railway.json</code> and <code>railpack.toml</code> are included for Railway specifically.
+            </div>
+          </details>
+
+          <details class="bg-base border border-border rounded-xl overflow-hidden group" role="listitem">
+            <summary class="flex items-center justify-between px-6 py-4 cursor-pointer text-fg font-medium hover:text-accent transition-colors list-none" aria-expanded="false">
+              What license is it under?
+              <span class="chevron text-fg-muted" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+              </span>
+            </summary>
+            <div class="px-6 pb-5 text-fg-muted text-sm leading-relaxed">
+              GNU General Public License v3.0 (GPL-3.0). The source code is available at <a href="https://github.com/akshatsinghkaushik/torrent-search-go" class="text-accent hover:underline">github.com/akshatsinghkaushik/torrent-search-go</a>. Contributions are welcome.
+            </div>
+          </details>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="py-12 border-t border-border" role="contentinfo">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-6">
+        <!-- Logo + name -->
+        <div class="flex items-center gap-2">
+          <svg width="22" height="22" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <rect width="32" height="32" rx="6" fill="#020617" stroke="#1E293B" stroke-width="1"/>
+            <circle cx="16" cy="16" r="9" stroke="#00ADD8" stroke-width="1.5" fill="none"/>
+            <path d="M16 11 L16 16 L20 16" stroke="#00ADD8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="16" cy="16" r="1.5" fill="#00ADD8"/>
+          </svg>
+          <span class="font-mono text-sm text-fg-muted">torrent-search-go</span>
+        </div>
+
+        <!-- Doc links -->
+        <nav aria-label="Documentation links">
+          <ul class="flex flex-wrap gap-x-6 gap-y-2 text-sm text-fg-muted justify-center" role="list">
+            <li><a href="https://github.com/akshatsinghkaushik/torrent-search-go/blob/main/docs/architecture.md" class="hover:text-accent transition-colors">Architecture</a></li>
+            <li><a href="https://github.com/akshatsinghkaushik/torrent-search-go/blob/main/docs/api-reference.md" class="hover:text-accent transition-colors">API Reference</a></li>
+            <li><a href="https://github.com/akshatsinghkaushik/torrent-search-go/blob/main/docs/configuration.md" class="hover:text-accent transition-colors">Configuration</a></li>
+            <li><a href="https://github.com/akshatsinghkaushik/torrent-search-go/blob/main/docs/development.md" class="hover:text-accent transition-colors">Development</a></li>
+            <li><a href="https://github.com/akshatsinghkaushik/torrent-search-go/blob/main/README.md" class="hover:text-accent transition-colors">README</a></li>
+          </ul>
+        </nav>
+
+        <!-- License badge -->
+        <div class="text-xs text-fg-muted font-mono">
+          <a href="https://github.com/akshatsinghkaushik/torrent-search-go/blob/main/LICENSE" class="hover:text-accent transition-colors">GPL-3.0 License</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Animate performance bars on scroll
+    (function () {
+      var bars = document.querySelectorAll('.perf-bar');
+      if (!bars.length) return;
+
+      function animateBars() {
+        bars.forEach(function (bar) {
+          bar.classList.add('animated');
+        });
+      }
+
+      if ('IntersectionObserver' in window) {
+        var section = document.getElementById('perf-bars');
+        var observer = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+              animateBars();
+              observer.disconnect();
+            }
+          });
+        }, { threshold: 0.2 });
+        if (section) observer.observe(section);
+      } else {
+        animateBars();
+      }
+    }());
+
+    // Keyboard accessibility for details elements
+    document.querySelectorAll('details').forEach(function (details) {
+      var summary = details.querySelector('summary');
+      if (summary) {
+        summary.addEventListener('click', function () {
+          summary.setAttribute('aria-expanded', String(!details.open));
+        });
+      }
+    });
+
+    // Respect prefers-reduced-motion for bar animation
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      document.querySelectorAll('.perf-bar').forEach(function (bar) {
+        bar.style.transition = 'none';
+        bar.classList.add('animated');
+      });
+    }
+  </script>
+</body>
+</html>

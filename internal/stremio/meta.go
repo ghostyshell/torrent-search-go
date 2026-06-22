@@ -1,0 +1,275 @@
+package stremio
+
+import (
+	"context"
+	"encoding/base64"
+	"fmt"
+	"strconv"
+	"strings"
+
+	"torrent-search-go/internal/services/jobs"
+	"torrent-search-go/internal/services/metadata"
+)
+
+// ServeMeta returns full Stremio metadata for supported item ids.
+func (h *Handler) ServeMeta(ctx context.Context, cfg Config, contentType, id string) (MetaResponse, error) {
+
+	if strings.HasPrefix(id, "porndb:") {
+		meta, err := h.serveTPDBMeta(ctx, id)
+		if err != nil || meta == nil {
+			return MetaResponse{Meta: nil}, err
+		}
+		// Always "Porn": catalog items must match meta type or stremio-core
+		// rejects the detail page ("No metadata found"), even if the client
+		// requested /meta/movie/… from stale catalog rows typed "movie".
+		meta.Type = "Porn"
+		return MetaResponse{Meta: meta}, nil
+	}
+
+	if isHentaiID(id) {
+		meta, err := h.serveProxiedMeta(ctx, id)
+		if err != nil || meta == nil {
+			return MetaResponse{Meta: nil}, err
+		}
+		meta.Type = "series"
+		return MetaResponse{Meta: meta}, nil
+	}
+
+	if strings.HasPrefix(id, "sc:") {
+		meta, err := h.serveStripchatMeta(ctx, id)
+		if err != nil {
+			return MetaResponse{Meta: nil}, err
+		}
+		if meta == nil {
+			return MetaResponse{Meta: nil}, nil
+		}
+		meta.Type = "Porn"
+		return MetaResponse{Meta: meta}, nil
+	}
+
+	if strings.HasPrefix(id, "jstrg:") {
+		// Compact studio catalog entry: one id encodes the 4K + 1080p variants
+		// of a scene. Build the detail-page meta from the representative (first)
+		// member, but stamp the original jstrg: id so stremio-core's id match
+		// holds. Streams are resolved by the Node edge from the full group.
+		group := DecodeGroupID(id)
+		if len(group) == 0 {
+			return MetaResponse{Meta: nil}, nil
+		}
+		rep := group[0]
+		repID := EncodeItemID(TorrentRecord{InfoHash: rep.H, Title: rep.T, TorrentURL: rep.U, Website: rep.W, DetailURL: rep.D, Quality: rep.Q})
+		return h.serveJstrmMeta(ctx, cfg, contentType, repID, id)
+	}
+
+	if !strings.HasPrefix(id, "jstrm:") {
+		return MetaResponse{Meta: nil}, nil
+	}
+
+	return h.serveJstrmMeta(ctx, cfg, contentType, id, id)
+}
+
+// serveJstrmMeta builds full Stremio metadata for a single jstrm: id. id is the
+// record to decode and look up; stampID is the id written to Meta.ID (for
+// jstrg: group entries this is the original group id, not the representative's
+// jstrm: id, so stremio-core's id match holds).
+func (h *Handler) serveJstrmMeta(ctx context.Context, cfg Config, contentType, id, stampID string) (MetaResponse, error) {
+	rec := DecodeItemID(id)
+	if rec == nil {
+		return MetaResponse{Meta: nil}, nil
+	}
+
+	store := newRedisStore(h.Redis)
+	stored, _ := store.getTorrent(ctx, id)
+
+	torrent := TorrentRecord{
+		Title:      rec.T,
+		InfoHash:   rec.H,
+		TorrentURL: rec.U,
+		Website:    rec.W,
+		DetailURL:  rec.D,
+	}
+	if stored != nil {
+		torrent = *stored
+	}
+
+	title, year := ParseTorrentTitle(torrent.Title)
+	if title == "" {
+		title = rec.T
+	}
+
+	website := rec.W
+	if website == "" && stored != nil {
+		website = stored.Website
+	}
+	detailURL := rec.D
+	if detailURL == "" && stored != nil {
+		detailURL = stored.DetailURL
+	}
+	infoHash := rec.H
+	if infoHash == "" && stored != nil {
+		infoHash = stored.InfoHash
+	}
+
+	metaID := StableMetaID(website, detailURL, infoHash)
+	var merged *jobs.SharedMeta
+	if website == "sukebei" {
+		merged = h.loadStashMeta(ctx, cfg, store, metaID, torrent.Title, detailURL)
+	} else {
+		merged = h.loadMergedMeta(ctx, cfg, store, metaID, torrent.Title, detailURL)
+	}
+
+	var ref *metadata.ReferenceMeta
+	if website == "pornrips" && !mergedHasPoster(merged) {
+		if slug := PornripsSlug(detailURL); slug != "" {
+			ref = h.referenceMetaForSlug(ctx, slug, true)
+			if ref != nil {
+				if merged == nil {
+					merged = referenceToMerged(ref)
+				} else {
+					refMerged := referenceToMerged(ref)
+					if merged.Title == "" && refMerged.Title != "" {
+						merged.Title = refMerged.Title
+					}
+					if merged.Poster == "" && refMerged.Poster != "" {
+						merged.Poster = refMerged.Poster
+					}
+					if merged.Background == "" && refMerged.Background != "" {
+						merged.Background = refMerged.Background
+					}
+					if merged.Description == "" && refMerged.Description != "" {
+						merged.Description = refMerged.Description
+					}
+					if merged.Year == "" && refMerged.Year != "" {
+						merged.Year = refMerged.Year
+					}
+				}
+			}
+		}
+	}
+
+	if h.MetaEnqueuer != nil {
+		h.MetaEnqueuer(ctx, []jobs.MetaEnqueueItem{{
+			Title:     torrent.Title,
+			DetailURL: detailURL,
+			Website:   website,
+			InfoHash:  infoHash,
+		}})
+	}
+
+	poster := ""
+	if merged != nil {
+		poster = merged.Poster
+	}
+	if poster == "" && ref != nil {
+		poster = ref.Poster
+	}
+	if poster == "" && torrent.CoverImage != "" {
+		poster = torrent.CoverImage
+	}
+	if poster == "" {
+		poster = h.resolveCover(ctx, torrent)
+	}
+	if poster == "" && website == "pornrips" && detailURL != "" {
+		poster = h.fetchPornripsDetailCover(ctx, detailURL)
+	}
+	if poster == "" {
+		poster = placeholderPoster(title)
+	}
+
+	name := title
+	if merged != nil && merged.Title != "" {
+		name = merged.Title
+	}
+	if name == "" && ref != nil && ref.Name != "" {
+		name = ref.Name
+	}
+	if name == "" {
+		name = torrent.Title
+	}
+	if name == "" {
+		name = "Unknown"
+	}
+
+	release := year
+	if merged != nil && merged.Year != "" {
+		release = merged.Year
+	}
+	if release == "" && ref != nil && ref.Year != "" {
+		release = ref.Year
+	}
+
+	desc := buildMetaDescription(torrent)
+	if merged != nil && merged.Description != "" {
+		desc = merged.Description
+	} else if ref != nil && ref.Description != "" {
+		desc = ref.Description
+	}
+
+	background := poster
+	if merged != nil && merged.Background != "" {
+		background = merged.Background
+	}
+	if background == poster && ref != nil && ref.Background != "" {
+		background = ref.Background
+	}
+
+	meta := &Meta{
+		ID:          stampID,
+		Type:        contentType,
+		Name:        name,
+		ReleaseInfo: release,
+		Poster:      poster,
+		Background:  background,
+		Description: desc,
+	}
+	if website == "sukebei" {
+		meta.PosterShape = "landscape"
+	}
+	if rec.U != "" {
+		meta.Website = rec.U
+	}
+	return MetaResponse{Meta: meta}, nil
+}
+
+func buildMetaDescription(t TorrentRecord) string {
+	parts := make([]string, 0, 5)
+	if qt := QualityTag(t.Title); qt != "" {
+		parts = append(parts, qt)
+	}
+	if t.Size != "" {
+		parts = append(parts, t.Size)
+	}
+	if t.Seeders > 0 {
+		parts = append(parts, strconv.Itoa(t.Seeders)+" seeders")
+	}
+	if t.Leechers > 0 {
+		parts = append(parts, strconv.Itoa(t.Leechers)+" leechers")
+	}
+	if t.Indexer != "" {
+		parts = append(parts, "via "+t.Indexer)
+	}
+	if len(parts) == 0 {
+		return t.Title
+	}
+	return strings.Join(parts, " | ")
+}
+
+func placeholderPoster(title string) string {
+	text := title
+	if len(text) > 28 {
+		text = text[:25] + "..."
+	}
+	svg := fmt.Sprintf(`<svg xmlns="http://www.w3.org/2000/svg" width="300" height="450">
+    <defs>
+      <linearGradient id="g" x1="0%%" y1="0%%" x2="100%%" y2="100%%">
+        <stop offset="0%%" stop-color="#1a1625"/>
+        <stop offset="100%%" stop-color="#0b0b10"/>
+      </linearGradient>
+    </defs>
+    <rect width="300" height="450" fill="url(#g)"/>
+    <rect x="20" y="20" width="260" height="410" rx="12" fill="none" stroke="#d946ef" stroke-width="2"/>
+    <text x="150" y="200" font-family="sans-serif" font-size="14" fill="#a89bb8" text-anchor="middle">No cover found</text>
+    <text x="150" y="240" font-family="sans-serif" font-size="12" fill="#f3f0f7" text-anchor="middle">%s</text>
+  </svg>`, text)
+	return "data:image/svg+xml;base64," + base64.StdEncoding.EncodeToString([]byte(svg))
+}
