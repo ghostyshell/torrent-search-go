@@ -1,0 +1,16 @@
+{
+  "name": "Torrent Search Go",
+  "short_name": "torrent-search-go",
+  "description": "High-performance Go backend for torrent search and streaming",
+  "start_url": "/torrent-search-go/",
+  "display": "browser",
+  "background_color": "#020617",
+  "theme_color": "#00ADD8",
+  "icons": [
+    {
+      "src": "/torrent-search-go/site/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+# Railpack configuration for Go backend
+
+[build]
+# Force use of Dockerfile instead of Railpack's native Go builder
+use_dockerfile = true
+
+[dockerfile]
+# Specify the Dockerfile location relative to project root
+path = "deployments/Dockerfile"
+context = "."

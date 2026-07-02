@@ -1,0 +1,94 @@
+# Binaries
+server
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary
+*.test
+
+# Output of the go coverage tool
+coverage.out
+coverage.html
+
+# Dependency directories
+vendor/
+node_modules/
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+*.log.*
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Build artifacts
+build/
+dist/
+
+# Next.js dashboard static export (built from dashboard/ by the Docker web-builder stage).
+# Locally produced by `cd dashboard && npm run build` then copying out/ here.
+static/dashboard/
+
+# Database files (local SQLite)
+*.db
+*.sqlite
+*.sqlite3
+
+# Go workspace
+go.work
+
+# Local agent instructions
+.claude/agents/
+.claude/worktrees/
+.claude/plans/
+graphify-out/
+# Local-only deploy instructions (carry secrets - never commit)
+.cursor/agents/deploy-registry.md
+.opencode/agents/deploy-registry.md
+
+# compiled binaries
+out
+out-linux
+out.bak
+out-*
+
+# Local-only Sliplane SSH debug instructions (carry service handles - never commit)
+.claude/agents/sliplane-ssh.md
+.cursor/agents/sliplane-ssh.md
+.opencode/agents/sliplane-ssh.md
+
+# Local-only throwaway diagnostic/build tools under cmd/. The deployed cmds
+# (pringest, prcount, hcount, hingest, backfill-pr-resolved-title) are tracked
+# and stay tracked - gitignore only affects untracked files, so one-off probes
+# like prcursor/prindex/prusage/prsearch/prtopdiff/prcurrentop/mongo-copy/
+# redis-copy are kept locally without polluting commits or the alt flatten.
+cmd/
+# Stray compiled binary of cmd/hingest at repo root (root-anchored so it does
+# not match the tracked cmd/hingest/ source dir).
+/hingest
+# Stray compiled binary of cmd/tpbingest at repo root (root-anchored so it does
+# not match the gitignored cmd/tpbingest/ source dir).
+/tpbingest

@@ -1,0 +1,98 @@
+# AI coding guidelines
+
+Apply to all tasks here, across Claude Code, OpenCode, and Cursor.
+
+## Coding discipline — adapted from Andrej Karpathy's CLAUDE.md
+Source: https://github.com/multica-ai/andrej-karpathy-skills/blob/main/CLAUDE.md
+
+1. **Think before coding.** State assumptions explicitly; if uncertain, ask. Surface confusion and tradeoffs instead of silently guessing.
+2. **Simplicity first.** Write the minimum code that solves the problem — nothing speculative. If a simpler approach exists, say so. Ask: would a senior engineer find this overcomplicated?
+3. **Surgical changes.** Touch only what the task requires — every changed line should trace directly to the request. Don't refactor or "improve" unrelated code; match the existing style.
+4. **Goal-driven execution.** Turn vague tasks into testable objectives (e.g. "add validation" → write tests for invalid inputs, then make them pass) and verify before finishing.
+
+These favor caution over speed; use judgment on trivial work.
+
+## Minimalist code — Ponytail
+Source: https://github.com/DietrichGebert/ponytail — "the best code is the code you never wrote."
+Before writing code, walk the ladder and stop at the first that works:
+1. Does this need to exist at all? (YAGNI)
+2. Is it in the standard library?
+3. Is it a native platform feature?
+4. Is it an already-installed dependency?
+5. Can it be one line?
+6. Only then, write the minimum necessary.
+
+Claude Code plugin: install once with `/plugin marketplace add DietrichGebert/ponytail` then `/plugin install ponytail@ponytail`, then review with `/ponytail-review`, `/ponytail-audit`, `/ponytail-debt`. (Cursor/OpenCode: copy the repo's rules files / add the plugin to `opencode.json`.)
+
+## Changelog — changelog
+
+Global skill: `~/.claude/skills/changelog/SKILL.md` (install: `sh ~/Code/scripts/install-changelog-skill.sh`). Repo shim: `docs/agents/skills/changelog.md`. Before committing product code, add bullets under `CHANGELOG.md` → `[Unreleased]` and stage the changelog. Pre-commit fails if `internal/` changes land without a `CHANGELOG.md` diff. Refresh shims: `sh scripts/sync-agent-skills.sh`.
+
+## Frontend / UI/UX skills
+
+User-wide install: `~/.claude/skills/` (OpenCode: `~/.config/opencode/skills/` symlinks). Refresh: `sh ~/Code/scripts/install-frontend-skills.sh`.
+
+This repo has user-facing UI. Match skills to the task; layer design → implement → audit on substantive UI work.
+
+### Core UI/UX
+
+| When | Skill |
+|------|-------|
+| Design systems, palettes, typography, stack guidance (default) | **ui-ux-pro-max** — `python3 ~/.claude/skills/ui-ux-pro-max/scripts/search.py "<product>" --design-system` |
+| Distinctive interfaces (typography, color, motion; anti–AI-slop) | **frontend-design** |
+| Frontend with opt-in aesthetic presets (editorial, monochrome, etc.) | **akhils-frontend-design** |
+| Full UX fundamentals — bold / creative | **bencium-innovative-ux-designer** |
+| UX within an existing design system (e.g. MUI) | **bencium-controlled-ux-designer** |
+| UI code review / web interface guidelines | **web-design-guidelines** — `/web-design-guidelines <files>` |
+| React performance (waterfalls, bundle, re-renders) | **react-best-practices** |
+| Component APIs — compound components, no boolean-prop sprawl | **composition-patterns** |
+| React Native / Expo mobile UI | **react-native-skills** |
+| shadcn/ui — components, registries, `components.json` | **shadcn** |
+| React + Tailwind artifact scaffold | **web-artifacts-builder** |
+| On-brand visuals from brand guidelines | **brand-guidelines** |
+| Accessibility audit or fix | **accesslint-audit** |
+| Live-page a11y scan | **accesslint-scan** |
+| A11y regressions vs branch or uncommitted changes | **accesslint-diff** |
+
+### Animation & motion
+
+| When | Skill |
+|------|-------|
+| Motion philosophy — timing, easing, choreography | **motion-design** |
+| React/Next Motion.dev — springs, scroll, gestures | **motion-dev-animations** |
+| Copy-paste CSS/JS UI effects (112 presets) | **motion-ref-skill** |
+| View Transitions API in React | **react-view-transitions** |
+| Cinematic / keynote-style UI reveals | **stagecraft** |
+| Multi-runtime motion (GSAP, Lottie, CSS, Three.js) | **hyperframes-animation** |
+| Programmatic video in React | **remotion-best-practices** |
+| Animation-rich HTML slides; PPT → web | **frontend-slides** — `/frontend-slides` |
+
+### Visual design
+
+| When | Skill |
+|------|-------|
+| Anti-slop landing pages & portfolios | **design-taste-frontend** |
+| Premium editorial / soft aesthetic | **high-end-visual-design** |
+| Clean editorial minimal UI | **minimalist-ui** |
+| Brutalist / industrial dashboards | **industrial-brutalist-ui** |
+| Redesign existing UI (audit-first) | **redesign-existing-projects** |
+| Linear-style product UI craft | **emil-design-eng** |
+| Extract design tokens from existing UI | **extract-design-system** |
+| Themes from descriptions | **theme-factory** |
+| Static visual art / posters / graphics | **canvas-design** |
+| Polish, critique, animate, refine UI | **impeccable** |
+| Mobile app UI via Sleek (requires `SLEEK_API_KEY`) | **sleek-design-mobile-apps** |
+
+**Typical flow:** ui-ux-pro-max, design-taste-frontend, or bencium-* for direction → implement (motion-* or react-view-transitions when animating) → web-design-guidelines + accesslint-* before shipping.
+
+## Use the specialized agents for quality
+A large library of specialized subagents is installed for each tool — `~/.claude/agents/` (Claude Code), `~/.config/opencode/agents/` (OpenCode), and `~/.cursor/agents/` (Cursor). Use them as part of **every** change to the repos, not as an afterthought: pick the most specific agent for the task and chain them.
+
+- **Review (always):** after any substantive change, run `code-reviewer`; for design/architecture changes, `architect-reviewer`.
+- **Security:** `security-auditor` / `security-engineer` for auth, secrets, input handling, crypto, or user-facing surfaces.
+- **Tests:** `test-automator` to add/extend tests; `qa-expert` for strategy.
+- **Debugging:** `debugger`, `error-detective`. **Performance:** `performance-engineer`; queries → `database-optimizer` / `sql-pro`.
+- **Refactors:** `refactoring-specialist`; multi-file or cross-repo → `codebase-orchestrator`.
+- **Stack specialists** (match the repo): e.g. `golang-pro`, `typescript-pro`, `javascript-pro`, `node-specialist`, `react-specialist`, `nextjs-developer`, `python-pro`.
+
+Before treating a change as done, run at least `code-reviewer` (plus `security-auditor` for sensitive changes). Browse the agent dirs above for the full set (154 agents).

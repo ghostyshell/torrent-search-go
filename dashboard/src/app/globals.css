@@ -1,0 +1,144 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  ui-ux-pro-max "Dark Mode (OLED)" palette as HSL semantic tokens.
+  Hex source: bg #020617, fg #F8FAFC, card/secondary #1E293B, primary #0F172A,
+  accent #22C55E, muted #1A1E2F, border #334155, destructive #EF4444.
+*/
+@layer base {
+  :root {
+    --background: 222 47% 5%;
+    --foreground: 210 40% 98%;
+    --card: 217 33% 17%;
+    --card-foreground: 210 40% 98%;
+    --popover: 217 33% 17%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 222 47% 11%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 228 29% 14%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 142 71% 45%;
+    --accent-foreground: 222 47% 5%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 215 25% 27%;
+    --input: 215 25% 27%;
+    --ring: 142 71% 45%;
+    --radius: 0.75rem;
+
+    /* Job status (bg / fg pairs, ported from the old dashboard). */
+    --status-idle-bg: 213 65% 30%;
+    --status-idle-fg: 213 100% 75%;
+    --status-running-bg: 33 60% 33%;
+    --status-running-fg: 43 96% 76%;
+    --status-completed-bg: 142 76% 24%;
+    --status-completed-fg: 142 71% 70%;
+    --status-disabled-bg: 240 5% 27%;
+    --status-disabled-fg: 240 5% 69%;
+    --status-error-bg: 0 73% 31%;
+    --status-error-fg: 0 91% 71%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    min-height: 100vh;
+  }
+  /* Minimal-glow focus ring per ui-ux-pro-max key effects. */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+  /* Respect reduced motion: disable all transitions/animations. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* Status badges: bg + fg pair. */
+  .status-idle {
+    @apply rounded-full px-2.5 py-1 text-xs font-medium;
+    background: hsl(var(--status-idle-bg));
+    color: hsl(var(--status-idle-fg));
+  }
+  .status-running {
+    @apply rounded-full px-2.5 py-1 text-xs font-medium;
+    background: hsl(var(--status-running-bg));
+    color: hsl(var(--status-running-fg));
+  }
+  .status-completed {
+    @apply rounded-full px-2.5 py-1 text-xs font-medium;
+    background: hsl(var(--status-completed-bg));
+    color: hsl(var(--status-completed-fg));
+  }
+  .status-disabled {
+    @apply rounded-full px-2.5 py-1 text-xs font-medium;
+    background: hsl(var(--status-disabled-bg));
+    color: hsl(var(--status-disabled-fg));
+  }
+  .status-error {
+    @apply rounded-full px-2.5 py-1 text-xs font-medium;
+    background: hsl(var(--status-error-bg));
+    color: hsl(var(--status-error-fg));
+  }
+
+  /* HTTP method + status-code badges (ported from the old dashboard palette). */
+  .method-get {
+    @apply rounded-md px-2.5 py-1 text-xs font-medium;
+    background: hsl(142 76% 24%);
+    color: hsl(142 71% 70%);
+  }
+  .method-post {
+    @apply rounded-md px-2.5 py-1 text-xs font-medium;
+    background: hsl(var(--status-idle-bg));
+    color: hsl(var(--status-idle-fg));
+  }
+  .method-put {
+    @apply rounded-md px-2.5 py-1 text-xs font-medium;
+    background: hsl(33 60% 33%);
+    color: hsl(43 96% 76%);
+  }
+  .method-delete {
+    @apply rounded-md px-2.5 py-1 text-xs font-medium;
+    background: hsl(0 73% 31%);
+    color: hsl(0 91% 71%);
+  }
+  .status-2xx {
+    @apply rounded-md px-2.5 py-1 text-xs font-medium;
+    background: hsl(142 76% 24%);
+    color: hsl(142 71% 70%);
+  }
+  .status-3xx {
+    @apply rounded-md px-2.5 py-1 text-xs font-medium;
+    background: hsl(var(--status-idle-bg));
+    color: hsl(var(--status-idle-fg));
+  }
+  .status-4xx {
+    @apply rounded-md px-2.5 py-1 text-xs font-medium;
+    background: hsl(33 60% 33%);
+    color: hsl(43 96% 76%);
+  }
+  .status-5xx {
+    @apply rounded-md px-2.5 py-1 text-xs font-medium;
+    background: hsl(0 73% 31%);
+    color: hsl(0 91% 71%);
+  }
+}

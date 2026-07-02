@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+vendor/
+
+# Build output
+dist/
+build/
+*.exe
+server
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Test coverage
+coverage.out
+coverage.html
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Deployment configs (keep example files)
+deployments/*.yaml
+!deployments/Dockerfile
