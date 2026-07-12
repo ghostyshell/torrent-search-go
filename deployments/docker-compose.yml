@@ -1,0 +1,71 @@
+# Docker Compose — torrent-search-go
+#
+# Runs the Go backend locally.
+# For production deployments, adapt environment variables to your platform.
+#
+# Usage:
+#   docker compose up          # start the Go backend
+
+version: "3.9"
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: deployments/Dockerfile
+    ports:
+      - "${PORT:-3001}:${PORT:-3001}"
+    environment:
+      NODE_ENV: "${NODE_ENV:-development}"
+      HOST: "0.0.0.0"
+      # PORT is injected by the hosting platform in production;
+      # set it here only for local development.
+      PORT: "${PORT:-3001}"
+
+      # Database
+      MONGODB_URI: "${MONGODB_URI}"
+      MONGODB_DB: "${MONGODB_DB:-torrent_search}"
+      MONGO_USERNAME: "${MONGO_USERNAME:-}"
+      MONGO_PASSWORD: "${MONGO_PASSWORD:-}"
+
+      # Session & encryption
+      SESSION_SECRET: "${SESSION_SECRET}"
+      REAL_DEBRID_ENCRYPTION_KEY: "${REAL_DEBRID_ENCRYPTION_KEY:-}"
+
+      # Google APIs
+      GOOGLE_SERVICE_ACCOUNT_JSON: "${GOOGLE_SERVICE_ACCOUNT_JSON}"
+      GOOGLE_CUSTOM_SEARCH_ENGINE_ID: "${GOOGLE_CUSTOM_SEARCH_ENGINE_ID}"
+      GOOGLE_CALLBACK_URL: "${GOOGLE_CALLBACK_URL}"
+
+      # External integrations (optional)
+      REAL_DEBRID_API_KEY: "${REAL_DEBRID_API_KEY:-}"
+      # CORS
+      FRONTEND_URL: "${FRONTEND_URL:-http://localhost:3000}"
+      ADDITIONAL_CORS_ORIGINS: "${ADDITIONAL_CORS_ORIGINS:-}"
+
+      # HiddenBay/PirateBay scraper override
+      HIDDENBAY_URL: "${HIDDENBAY_URL:-}"
+
+      # Logging
+      LOG_LEVEL: "${LOG_LEVEL:-debug}"
+      LOG_DIR: /app/logs
+
+      # Cache
+      STREAM_URL_TTL_SECONDS: "${STREAM_URL_TTL_SECONDS:-72000}"
+
+      # Security
+      MONITORING_IP_ALLOWLIST: "${MONITORING_IP_ALLOWLIST:-}"
+      DASHBOARD_PASSWORD: "${DASHBOARD_PASSWORD:-}"
+      ALLOWED_EMAILS: "${ALLOWED_EMAILS:-}"
+
+    volumes:
+      - app_logs:/app/logs
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:${PORT:-3001}/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  app_logs:

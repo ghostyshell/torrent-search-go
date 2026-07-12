@@ -1,0 +1,98 @@
+# Pre-commit Configuration
+# Install: pip install pre-commit && pre-commit install
+
+repos:
+  - repo: local
+    hooks:
+      # Go linting
+      - id: go-lint
+        name: Go Lint
+        entry: golangci-lint run
+        language: system
+        types: [go]
+        pass_filenames: false
+        args: [--fix]
+
+      # Go formatting
+      - id: go-format
+        name: Go Format
+        entry: gofmt -s -w
+        language: system
+        types: [go]
+
+      # Go vet
+      - id: go-vet
+        name: Go Vet
+        entry: go vet
+        language: system
+        types: [go]
+        pass_filenames: false
+
+      # Go tests with coverage
+      - id: go-test
+        name: Go Tests
+        entry: go test -race -coverprofile=coverage.out ./...
+        language: system
+        types: [go]
+        pass_filenames: false
+        always_run: true
+
+      # Error checking
+      - id: errcheck
+        name: Errcheck
+        entry: errcheck ./...
+        language: system
+        types: [go]
+        pass_filenames: false
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      # Check for merge conflicts
+      - id: check-merge-conflict
+
+      # Check for private keys
+      - id: detect-private-key
+
+      # Check YAML syntax
+      - id: check-yaml
+
+      # Check JSON syntax
+      - id: check-json
+
+      # Trim trailing whitespace
+      - id: trailing-whitespace
+        types: [go]
+
+      # Check for added large files
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+
+  - repo: https://github.com/tekwizely/pre-commit-golang
+    rev: v1.0.0-rc.1
+    hooks:
+      # Import sorting
+      - id: go-imports
+        args: [-w]
+
+      # Module tidy
+      - id: go-mod-tidy
+
+# Configuration for coverage reporting
+coverage:
+  tool: go
+  profile: coverage.out
+  threshold: 100
+  report: coverage.html
+
+# Skip patterns
+exclude: |
+  (?x)^(
+    vendor/.*|
+    \.git/.*|
+    \.idea/.*|
+    \.vscode/.*|
+    node_modules/.*|
+    \*\.pb\.go|
+    \*\.generated\.go|
+  )$

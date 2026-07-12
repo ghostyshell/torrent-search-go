@@ -1,0 +1,94 @@
+# Binaries
+server
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary
+*.test
+
+# Output of the go coverage tool
+coverage.out
+coverage.html
+
+# Dependency directories
+vendor/
+node_modules/
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+*.log.*
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Build artifacts
+build/
+dist/
+
+# Next.js dashboard static export (built from dashboard/ by the Docker web-builder stage).
+# Locally produced by `cd dashboard && npm run build` then copying out/ here.
+static/dashboard/
+
+# Database files (local SQLite)
+*.db
+*.sqlite
+*.sqlite3
+
+# Go workspace
+go.work
+
+# Local agent instructions
+.claude/agents/
+.claude/worktrees/
+.claude/plans/
+graphify-out/
+# Local-only deploy instructions (carry secrets - never commit)
+.cursor/agents/deploy-registry.md
+.opencode/agents/deploy-registry.md
+
+# compiled binaries
+out
+out-linux
+out.bak
+out-*
+
+# Local-only Sliplane SSH debug instructions (carry service handles - never commit)
+.claude/agents/sliplane-ssh.md
+.cursor/agents/sliplane-ssh.md
+.opencode/agents/sliplane-ssh.md
+
+# Local-only diagnostic/build tools under cmd/. None are deployed: the Docker
+# image builds only /app/server (Dockerfile line 20, `go build -o /build/server .`),
+# so every cmd/ is a local Mac tool run against prod Mongo / SSH. All were
+# removed from git tracking on 2026-06-27 (the bulk-fill tooling purge) and are
+# kept here without polluting commits or the alt flatten.
+cmd/
+# Stray compiled binaries of cmd/ tools at repo root (root-anchored so they do
+# not match the gitignored cmd/ source dirs).
+/hingest
+/tpbingest
+/watchporningest
+/yesporningest

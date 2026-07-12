@@ -1,0 +1,151 @@
+# Caveman Code Generation Configuration
+
+# Template definitions for code generation
+templates:
+  handler: |
+    package handlers
+
+    import (
+        "net/http"
+    )
+
+    // {{.Name}}Handler handles {{.Name}} endpoints
+    type {{.Name}}Handler struct {
+        storage *StorageProvider
+    }
+
+    // New{{.Name}}Handler creates a new {{.Name}} handler
+    func New{{.Name}}Handler(storage *StorageProvider) *{{.Name}}Handler {
+        return &{{.Name}}Handler{
+            storage: storage,
+        }
+    }
+
+    // {{.Action}} handles {{.Action}} request
+    func (h *{{.Name}}Handler) {{.Action}}(w http.ResponseWriter, r *http.Request) {
+        // TODO: Implement {{.Action}}
+        writeJSON(w, http.StatusOK, map[string]interface{}{
+            "success": true,
+            "message": "{{.Action}} completed",
+        })
+    }
+
+  service: |
+    package services
+
+    import (
+        "context"
+    )
+
+    // {{.Name}}Service handles {{.Name}} business logic
+    type {{.Name}}Service struct {
+        // dependencies
+    }
+
+    // New{{.Name}}Service creates a new {{.Name}} service
+    func New{{.Name}}Service() *{{.Name}}Service {
+        return &{{.Name}}Service{}
+    }
+
+    // {{.Action}} performs {{.Action}}
+    func (s *{{.Name}}Service) {{.Action}}(ctx context.Context) error {
+        // TODO: Implement {{.Action}}
+        return nil
+    }
+
+  repository: |
+    package storage
+
+    import (
+        "context"
+        "torrent-search-go/pkg/turso"
+    )
+
+    // {{.Name}}Repository handles {{.Name}} data operations
+    type {{.Name}}Repository struct {
+        db *turso.Client
+    }
+
+    // New{{.Name}}Repository creates a new {{.Name}} repository
+    func New{{.Name}}Repository(db *turso.Client) *{{.Name}}Repository {
+        return &{{.Name}}Repository{
+            db: db,
+        }
+    }
+
+    // {{.Action}} performs {{.Action}}
+    func (r *{{.Name}}Repository) {{.Action}}(ctx context.Context) error {
+        // TODO: Implement {{.Action}}
+        return nil
+    }
+
+  test: |
+    package {{.Package}}
+
+    import (
+        "testing"
+    )
+
+    func Test{{.Name}}_{{.Action}}(t *testing.T) {
+        tests := []struct {
+            name    string
+            input   interface{}
+            want    interface{}
+            wantErr bool
+        }{
+            {
+                name:    "success case",
+                input:   nil,
+                want:    nil,
+                wantErr: false,
+            },
+        }
+
+        for _, tt := range tests {
+            t.Run(tt.name, func(t *testing.T) {
+                // TODO: Implement test
+            })
+        }
+    }
+
+# Generators
+generators:
+  - name: boilerplate
+    description: Generate boilerplate code for handlers, services, repositories
+    pattern: "**/*.go"
+    exclude: "**/*_test.go"
+    template: boilerplate.tmpl
+
+  - name: tests
+    description: Generate table-driven tests for all functions
+    pattern: "**/*.go"
+    exclude: "**/*_test.go"
+    template: table_driven_test.tmpl
+
+  - name: mocks
+    description: Generate mocks for interfaces
+    pattern: "**/interfaces.go"
+    template: mockgen.tmpl
+
+  - name: docs
+    description: Generate GoDoc comments
+    pattern: "**/*.go"
+    template: godoc.tmpl
+
+# Commands
+commands:
+  generate:
+    description: Generate code from templates
+    usage: caveman generate --package <package-name>
+
+  test:
+    description: Generate tests for a package
+    usage: caveman test --package <package-name>
+
+  mock:
+    description: Generate mocks for interfaces
+    usage: caveman mock --input <interface-file> --output <output-file>
+
+  docs:
+    description: Generate documentation
+    usage: caveman docs --package <package-name>
